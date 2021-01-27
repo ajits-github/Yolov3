@@ -9,6 +9,8 @@ from warnings import warn
 
 import math
 import numpy as np
+import torch
+print("installed")
 import torch.distributed as dist
 import torch.nn as nn
 import torch.nn.functional as F
@@ -47,6 +49,9 @@ def train(hyp, opt, device, tb_writer=None, wandb=None):
     logger.info(f'Hyperparameters {hyp}')
     save_dir, epochs, batch_size, total_batch_size, weights, rank = \
         Path(opt.save_dir), opt.epochs, opt.batch_size, opt.total_batch_size, opt.weights, opt.global_rank
+
+    print(f"OPT: {opt}")
+    print(f"DEVICE: {device}")
 
     # Directories
     wdir = save_dir / 'weights'

@@ -56,6 +56,7 @@ def exif_size(img):
 
 def create_dataloader(path, imgsz, batch_size, stride, opt, hyp=None, augment=False, cache=False, pad=0.0, rect=False,
                       rank=-1, world_size=1, workers=8, image_weights=False):
+    # print("PATHHHH: "+path)
     # Make sure only the first process in DDP process the dataset first, and the following others can use the cache
     with torch_distributed_zero_first(rank):
         dataset = LoadImagesAndLabels(path, imgsz, batch_size,
@@ -344,14 +345,16 @@ class LoadImagesAndLabels(Dataset):  # for training/testing
         self.mosaic = self.augment and not self.rect  # load 4 images at a time into a mosaic (only during training)
         self.mosaic_border = [-img_size // 2, -img_size // 2]
         self.stride = stride
-
+        print(f"PAthhhhhhhhh in datsets.py: {path}")
         try:
             f = []  # image files
             for p in path if isinstance(path, list) else [path]:
                 p = Path(p)  # os-agnostic
                 if p.is_dir():  # dir
                     f += glob.glob(str(p / '**' / '*.*'), recursive=True)
-                elif p.is_file():  # file
+                    # print(f"f in datsets.py: {f}")
+                    # exit()
+                elif p.is_file():  # file 
                     with open(p, 'r') as t:
                         t = t.read().strip().splitlines()
                         parent = str(p.parent) + os.sep
@@ -359,6 +362,7 @@ class LoadImagesAndLabels(Dataset):  # for training/testing
                 else:
                     raise Exception('%s does not exist' % p)
             self.img_files = sorted([x.replace('/', os.sep) for x in f if x.split('.')[-1].lower() in img_formats])
+            # print(f"IMGGGG FILESSSSS: {img_files}")
             assert self.img_files, 'No images found'
         except Exception as e:
             raise Exception('Error loading data from %s: %s\nSee %s' % (path, e, help_url))
@@ -582,9 +586,11 @@ class LoadImagesAndLabels(Dataset):  # for training/testing
 # Ancillary functions --------------------------------------------------------------------------------------------------
 def load_image(self, index):
     # loads 1 image from dataset, returns img, original hw, resized hw
+    # print(f'INDEXXXXXX: {index}')
     img = self.imgs[index]
     if img is None:  # not cached
         path = self.img_files[index]
+        # print(f'path in INDEXXXXXX: {path}')
         img = cv2.imread(path)  # BGR
         assert img is not None, 'Image Not Found ' + path
         h0, w0 = img.shape[:2]  # orig hw
@@ -879,8 +885,16 @@ def flatten_recursive(path='../coco128'):
     for file in tqdm(glob.glob(str(Path(path)) + '/**/*.*', recursive=True)):
         shutil.copyfile(file, new_path / Path(file).name)
 
+# def flatten_recursive(path='../gtsrb'):
+#     # Flatten a recursive directory by bringing all files to top level
+#     new_path = Path(path + '_flat')
+#     create_folder(new_path)
+#     for file in tqdm(glob.glob(str(Path(path)) + '/**/*.*', recursive=True)):
+#         shutil.copyfile(file, new_path / Path(file).name)
+
 
 def extract_boxes(path='../coco128/'):  # from utils.datasets import *; extract_boxes('../coco128')
+# def extract_boxes(path='../gtsrb/'):
     # Convert detection dataset into classification dataset, with one directory per class
 
     path = Path(path)  # images dir
@@ -916,6 +930,7 @@ def extract_boxes(path='../coco128/'):  # from utils.datasets import *; extract_
 
 
 def autosplit(path='../coco128', weights=(0.9, 0.1, 0.0)):  # from utils.datasets import *; autosplit('../coco128')
+# def autosplit(path='../gtsrb', weights=(0.9, 0.1, 0.0)):
     """ Autosplit a dataset into train/val/test splits and save path/autosplit_*.txt files
     # Arguments
         path:       Path to images directory
